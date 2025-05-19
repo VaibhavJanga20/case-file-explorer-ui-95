@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { 
@@ -12,10 +11,7 @@ import {
 } from "lucide-react";
 import { 
   Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
+  CardContent 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -236,19 +232,29 @@ const Investigations = () => {
   const [statusFilter, setStatusFilter] = useState<InvestigationStatus | null>(null);
   
   useEffect(() => {
-    // Simulate data fetching
-    setTimeout(() => {
-      const allInvestigations = getInvestigations();
-      
-      // Enhance investigations with crime information
-      const enhancedInvestigations = allInvestigations.map(investigation => {
-        const crime = getCrimeById(investigation.crimeId);
-        return { ...investigation, crime };
-      });
-      
-      setInvestigations(enhancedInvestigations);
-      setLoading(false);
-    }, 500);
+    const fetchInvestigations = async () => {
+      setLoading(true);
+      try {
+        // Get all investigations
+        const allInvestigations = await getInvestigations();
+        
+        // Enhance investigations with crime information
+        const enhancedInvestigations: InvestigationWithCrime[] = [];
+        
+        for (const investigation of allInvestigations) {
+          const crime = await getCrimeById(investigation.crimeId);
+          enhancedInvestigations.push({ ...investigation, crime });
+        }
+        
+        setInvestigations(enhancedInvestigations);
+      } catch (error) {
+        console.error("Error fetching investigations:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchInvestigations();
   }, []);
   
   const clearFilters = () => {

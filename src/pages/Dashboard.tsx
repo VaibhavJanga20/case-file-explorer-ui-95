@@ -61,13 +61,26 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate data fetching
-    setTimeout(() => {
-      setCrimeStats(getCrimeStatistics());
-      setSuspectStats(getSuspectStatistics());
-      setInvestigationStats(getInvestigationStatistics());
-      setLoading(false);
-    }, 500);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [crimeData, suspectData, investigationData] = await Promise.all([
+          getCrimeStatistics(),
+          getSuspectStatistics(),
+          getInvestigationStatistics()
+        ]);
+        
+        setCrimeStats(crimeData);
+        setSuspectStats(suspectData);
+        setInvestigationStats(investigationData);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
   }, []);
 
   if (loading) {

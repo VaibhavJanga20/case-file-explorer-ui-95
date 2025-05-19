@@ -15,7 +15,16 @@ export const getInvestigations = async (): Promise<Investigation[]> => {
       throw error;
     }
     
-    return data as Investigation[];
+    // Map database fields to frontend type
+    return (data || []).map(item => ({
+      id: item.id,
+      crimeId: item.crime_id,
+      officerInCharge: item.officer_in_charge,
+      status: item.status as InvestigationStatus,
+      startDate: item.start_date,
+      lastUpdated: item.last_updated,
+      notes: item.notes,
+    }));
   } catch (error: any) {
     toast({
       variant: "destructive",
@@ -38,7 +47,18 @@ export const getInvestigationById = async (id: string): Promise<Investigation | 
       throw error;
     }
     
-    return data as Investigation;
+    if (!data) return undefined;
+    
+    // Map database fields to frontend type
+    return {
+      id: data.id,
+      crimeId: data.crime_id,
+      officerInCharge: data.officer_in_charge,
+      status: data.status as InvestigationStatus,
+      startDate: data.start_date,
+      lastUpdated: data.last_updated,
+      notes: data.notes,
+    };
   } catch (error: any) {
     toast({
       variant: "destructive",
@@ -61,7 +81,16 @@ export const getInvestigationsByCrimeId = async (crimeId: string): Promise<Inves
       throw error;
     }
     
-    return data as Investigation[];
+    // Map database fields to frontend type
+    return (data || []).map(item => ({
+      id: item.id,
+      crimeId: item.crime_id,
+      officerInCharge: item.officer_in_charge,
+      status: item.status as InvestigationStatus,
+      startDate: item.start_date,
+      lastUpdated: item.last_updated,
+      notes: item.notes,
+    }));
   } catch (error: any) {
     toast({
       variant: "destructive",
@@ -76,7 +105,7 @@ export const getInvestigationsByCrimeId = async (crimeId: string): Promise<Inves
 export const getInvestigationStatistics = async (): Promise<InvestigationStatistics> => {
   try {
     // Fetch all investigations
-    const { data: investigations, error } = await supabase
+    const { data: investigationsData, error } = await supabase
       .from('investigations')
       .select('*')
       .order('start_date', { ascending: false });
@@ -84,6 +113,16 @@ export const getInvestigationStatistics = async (): Promise<InvestigationStatist
     if (error) {
       throw error;
     }
+    
+    const investigations = (investigationsData || []).map(item => ({
+      id: item.id,
+      crimeId: item.crime_id,
+      officerInCharge: item.officer_in_charge,
+      status: item.status as InvestigationStatus,
+      startDate: item.start_date,
+      lastUpdated: item.last_updated,
+      notes: item.notes,
+    }));
     
     const byStatus: Record<InvestigationStatus, number> = {
       'pending': 0,
@@ -102,8 +141,8 @@ export const getInvestigationStatistics = async (): Promise<InvestigationStatist
     let totalDays = 0;
     
     completedInvestigations.forEach(inv => {
-      const startDate = new Date(inv.start_date);
-      const endDate = new Date(inv.last_updated);
+      const startDate = new Date(inv.startDate);
+      const endDate = new Date(inv.lastUpdated);
       const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       totalDays += diffDays;

@@ -15,7 +15,16 @@ export const getCrimes = async (): Promise<Crime[]> => {
       throw error;
     }
     
-    return data as Crime[];
+    // Map database fields to frontend type
+    return (data || []).map(item => ({
+      id: item.id,
+      type: item.type as CrimeType,
+      date: item.date,
+      location: item.location,
+      description: item.description,
+      status: item.status,
+      severity: item.severity,
+    }));
   } catch (error: any) {
     toast({
       variant: "destructive",
@@ -38,7 +47,18 @@ export const getCrimeById = async (id: string): Promise<Crime | undefined> => {
       throw error;
     }
     
-    return data as Crime;
+    if (!data) return undefined;
+    
+    // Map database fields to frontend type
+    return {
+      id: data.id,
+      type: data.type as CrimeType,
+      date: data.date,
+      location: data.location,
+      description: data.description,
+      status: data.status,
+      severity: data.severity,
+    };
   } catch (error: any) {
     toast({
       variant: "destructive",
@@ -62,12 +82,23 @@ export const getCrimeStatistics = async (): Promise<CrimeStatistics> => {
       throw error;
     }
     
+    // Map database fields to frontend type
+    const mappedCrimes: Crime[] = (crimes || []).map(item => ({
+      id: item.id,
+      type: item.type as CrimeType,
+      date: item.date,
+      location: item.location,
+      description: item.description,
+      status: item.status,
+      severity: item.severity,
+    }));
+    
     // Calculate statistics
-    const openCases = crimes.filter(crime => crime.status === 'open').length;
-    const solvedCases = crimes.filter(crime => crime.status === 'closed').length;
+    const openCases = mappedCrimes.filter(crime => crime.status === 'open').length;
+    const solvedCases = mappedCrimes.filter(crime => crime.status === 'closed').length;
     
     // Count by type
-    const crimesByType = crimes.reduce((acc, crime) => {
+    const crimesByType = mappedCrimes.reduce((acc, crime) => {
       acc[crime.type] = (acc[crime.type] || 0) + 1;
       return acc;
     }, {} as Record<CrimeType, number>);
@@ -86,12 +117,12 @@ export const getCrimeStatistics = async (): Promise<CrimeStatistics> => {
     });
     
     // Sort by date, most recent first
-    const recentCrimes = [...crimes]
+    const recentCrimes = [...mappedCrimes]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 5);
     
     return {
-      totalCrimes: crimes.length,
+      totalCrimes: mappedCrimes.length,
       openCases,
       solvedCases,
       crimesByType,

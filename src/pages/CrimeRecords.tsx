@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { 
@@ -10,10 +9,7 @@ import {
 } from "lucide-react";
 import { 
   Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
+  CardContent 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { getCrimes } from "@/services/mockData";
+import { getCrimes } from "@/services/crimeService";
 import { Crime, CrimeType } from "@/types";
 import { 
   Dialog, 
@@ -274,11 +270,14 @@ const CrimeRecords = () => {
   const [severityFilter, setSeverityFilter] = useState<string | null>(null);
   
   useEffect(() => {
-    // Simulate data fetching
-    setTimeout(() => {
-      setCrimes(getCrimes());
+    const fetchCrimes = async () => {
+      setLoading(true);
+      const crimesData = await getCrimes();
+      setCrimes(crimesData);
       setLoading(false);
-    }, 500);
+    };
+    
+    fetchCrimes();
   }, []);
   
   const clearFilters = () => {

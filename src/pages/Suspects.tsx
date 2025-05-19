@@ -27,19 +27,29 @@ const Suspects = () => {
   const [statusFilter, setStatusFilter] = useState<SuspectStatus | null>(null);
   
   useEffect(() => {
-    // Simulate data fetching
-    setTimeout(() => {
-      const allSuspects = getSuspects();
-      
-      // Enhance suspects with crime information
-      const enhancedSuspects = allSuspects.map(suspect => {
-        const crime = getCrimeById(suspect.crimeId);
-        return { ...suspect, crime };
-      });
-      
-      setSuspects(enhancedSuspects);
-      setLoading(false);
-    }, 500);
+    const fetchSuspects = async () => {
+      setLoading(true);
+      try {
+        // Get all suspects
+        const allSuspects = await getSuspects();
+        
+        // Enhance suspects with crime information
+        const enhancedSuspects = [];
+        
+        for (const suspect of allSuspects) {
+          const crime = await getCrimeById(suspect.crimeId);
+          enhancedSuspects.push({ ...suspect, crime });
+        }
+        
+        setSuspects(enhancedSuspects);
+      } catch (error) {
+        console.error("Error fetching suspects:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchSuspects();
   }, []);
   
   const filteredSuspects = suspects.filter(suspect => {

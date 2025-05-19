@@ -16,7 +16,17 @@ export const getSuspects = async (): Promise<Suspect[]> => {
       throw error;
     }
     
-    return data as Suspect[];
+    // Map database fields to frontend type
+    return (data || []).map(item => ({
+      id: item.id,
+      name: item.name,
+      crimeId: item.crime_id,
+      status: item.status as SuspectStatus,
+      dateOfBirth: item.date_of_birth,
+      gender: item.gender,
+      address: item.address,
+      contactInfo: item.contact_info,
+    }));
   } catch (error: any) {
     toast({
       variant: "destructive",
@@ -39,7 +49,19 @@ export const getSuspectById = async (id: string): Promise<Suspect | undefined> =
       throw error;
     }
     
-    return data as Suspect;
+    if (!data) return undefined;
+    
+    // Map database fields to frontend type
+    return {
+      id: data.id,
+      name: data.name,
+      crimeId: data.crime_id,
+      status: data.status as SuspectStatus,
+      dateOfBirth: data.date_of_birth,
+      gender: data.gender,
+      address: data.address,
+      contactInfo: data.contact_info,
+    };
   } catch (error: any) {
     toast({
       variant: "destructive",
@@ -62,7 +84,17 @@ export const getSuspectsByCrimeId = async (crimeId: string): Promise<Suspect[]> 
       throw error;
     }
     
-    return data as Suspect[];
+    // Map database fields to frontend type
+    return (data || []).map(item => ({
+      id: item.id,
+      name: item.name,
+      crimeId: item.crime_id,
+      status: item.status as SuspectStatus,
+      dateOfBirth: item.date_of_birth,
+      gender: item.gender,
+      address: item.address,
+      contactInfo: item.contact_info,
+    }));
   } catch (error: any) {
     toast({
       variant: "destructive",
@@ -77,13 +109,25 @@ export const getSuspectsByCrimeId = async (crimeId: string): Promise<Suspect[]> 
 export const getSuspectStatistics = async (): Promise<SuspectStatistics> => {
   try {
     // Fetch all suspects
-    const { data: suspects, error } = await supabase
+    const { data: suspectsData, error } = await supabase
       .from('suspects')
       .select('*, crimes(type)');
     
     if (error) {
       throw error;
     }
+    
+    const suspects = (suspectsData || []).map(item => ({
+      id: item.id,
+      name: item.name,
+      crimeId: item.crime_id,
+      status: item.status as SuspectStatus,
+      dateOfBirth: item.date_of_birth,
+      gender: item.gender,
+      address: item.address,
+      contactInfo: item.contact_info,
+      crimes: item.crimes,
+    }));
     
     const byCrimeType: Record<CrimeType, number> = {
       theft: 0,
