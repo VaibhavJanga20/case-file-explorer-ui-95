@@ -6,6 +6,8 @@ import { investigations } from '@/data/mockInvestigations';
 
 // Search functionality
 export const searchAll = (query: string) => {
+  if (!query) return { crimes: [], suspects: [], investigations: [] };
+  
   query = query.toLowerCase();
   
   const matchedCrimes = crimes.filter(crime => 
