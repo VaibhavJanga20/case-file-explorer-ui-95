@@ -1,3 +1,4 @@
+
 import { Crime, CrimeType, CrimeStatistics } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -71,13 +72,24 @@ export const getCrimeById = async (id: string): Promise<Crime | undefined> => {
 // Add createCrime function
 export const createCrime = async (crime: Omit<Crime, 'id'>): Promise<Crime | null> => {
   try {
-    // Generate a UUID for the crime ID
-    const id = crypto.randomUUID().slice(0, 8);
+    // Generate a new ID with a 'c' prefix and a number
+    const { data: existingCrimes } = await supabase
+      .from('crimes')
+      .select('id')
+      .order('id', { ascending: false })
+      .limit(1);
+    
+    let newId = 'c1';
+    if (existingCrimes && existingCrimes.length > 0) {
+      const lastId = existingCrimes[0].id;
+      const lastNum = parseInt(lastId.replace(/\D/g, ''));
+      newId = `c${lastNum + 1}`;
+    }
     
     const { data, error } = await supabase
       .from('crimes')
       .insert([{ 
-        id, 
+        id: newId, 
         type: crime.type,
         date: crime.date,
         location: crime.location,

@@ -377,6 +377,8 @@ const CrimeRecords = () => {
     try {
       const crimesData = await getCrimes();
       setCrimes(crimesData);
+    } catch (error) {
+      console.error('Error fetching crimes:', error);
     } finally {
       setLoading(false);
     }
@@ -397,9 +399,13 @@ const CrimeRecords = () => {
   };
 
   const handleDeleteCrime = async (id: string) => {
-    const success = await deleteCrime(id);
-    if (success) {
-      setCrimes(prevCrimes => prevCrimes.filter(crime => crime.id !== id));
+    try {
+      const success = await deleteCrime(id);
+      if (success) {
+        setCrimes(prevCrimes => prevCrimes.filter(crime => crime.id !== id));
+      }
+    } catch (error) {
+      console.error('Error deleting crime:', error);
     }
   };
   

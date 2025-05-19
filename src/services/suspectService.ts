@@ -2,7 +2,6 @@
 import { Suspect, SuspectStatus, SuspectStatistics, CrimeType } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { getCrimeById } from './crimeService';
 
 // Helper functions to get suspect data
 export const getSuspects = async (): Promise<Suspect[]> => {
@@ -108,7 +107,7 @@ export const getSuspectsByCrimeId = async (crimeId: string): Promise<Suspect[]> 
 // Dashboard statistics function for suspects
 export const getSuspectStatistics = async (): Promise<SuspectStatistics> => {
   try {
-    // Fetch all suspects
+    // Fetch all suspects with their crimes
     const { data: suspectsData, error } = await supabase
       .from('suspects')
       .select('*, crimes(type)');
