@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   BarChart, 
@@ -29,7 +30,7 @@ import {
   getCrimeStatistics, 
   getSuspectStatistics, 
   getInvestigationStatistics 
-} from "@/services";
+} from "@/services/mockData";
 import { CrimeStatistics, SuspectStatistics, InvestigationStatistics, Crime, CrimeType } from "@/types";
 import { Link } from "react-router-dom";
 
@@ -63,9 +64,11 @@ const Dashboard = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const crimeData = await getCrimeStatistics();
-        const suspectData = await getSuspectStatistics();
-        const investigationData = await getInvestigationStatistics();
+        const [crimeData, suspectData, investigationData] = await Promise.all([
+          getCrimeStatistics(),
+          getSuspectStatistics(),
+          getInvestigationStatistics()
+        ]);
         
         setCrimeStats(crimeData);
         setSuspectStats(suspectData);
@@ -108,27 +111,23 @@ const Dashboard = () => {
   }
 
   // Prepare data for crime by type chart
-  const crimeByTypeData = crimeStats ? Object.entries(crimeStats.crimesByType)
-    .filter(([_, count]) => count > 0) // Only show types with data
-    .map(([type, count]) => ({
-      name: formatCrimeType(type as CrimeType),
-      value: count
-    })) : [];
+  const crimeByTypeData = Object.entries(crimeStats.crimesByType).map(([type, count]) => ({
+    name: formatCrimeType(type as CrimeType),
+    value: count
+  }));
 
   // Prepare data for crime status chart
-  const crimeStatusData = crimeStats ? [
+  const crimeStatusData = [
     { name: "Open", value: crimeStats.openCases },
     { name: "Closed", value: crimeStats.solvedCases },
     { name: "Other", value: crimeStats.totalCrimes - crimeStats.openCases - crimeStats.solvedCases }
-  ].filter(item => item.value > 0) : []; // Only show statuses with data
+  ];
 
   // Prepare data for investigation status chart
-  const investigationStatusData = investigationStats ? Object.entries(investigationStats.byStatus)
-    .filter(([_, count]) => count > 0) // Only show statuses with data
-    .map(([status, count]) => ({
-      name: status.charAt(0).toUpperCase() + status.slice(1),
-      value: count
-    })) : [];
+  const investigationStatusData = Object.entries(investigationStats.byStatus).map(([status, count]) => ({
+    name: status.charAt(0).toUpperCase() + status.slice(1),
+    value: count
+  }));
 
   return (
     <div className="page-container">
@@ -151,11 +150,11 @@ const Dashboard = () => {
               <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
                 <div 
                   className="h-full bg-primary" 
-                  style={{ width: `${crimeStats.totalCrimes ? (crimeStats.openCases / crimeStats.totalCrimes) * 100 : 0}%` }}
+                  style={{ width: `${(crimeStats.openCases / crimeStats.totalCrimes) * 100}%` }}
                 ></div>
               </div>
               <span className="text-xs text-muted-foreground">
-                {crimeStats.totalCrimes ? Math.round((crimeStats.openCases / crimeStats.totalCrimes) * 100) : 0}% Open
+                {Math.round((crimeStats.openCases / crimeStats.totalCrimes) * 100)}% Open
               </span>
             </div>
           </CardContent>
@@ -175,7 +174,7 @@ const Dashboard = () => {
             <div className="mt-4 flex items-center text-xs text-muted-foreground">
               <Clock className="mr-1 h-3 w-3" />
               Most common status: {
-                Object.entries(suspectStats.byStatus).sort((a, b) => b[1] - a[1])[0]?.[0] || "None"
+                Object.entries(suspectStats.byStatus).sort((a, b) => b[1] - a[1])[0][0]
               }
             </div>
           </CardContent>
@@ -244,50 +243,48 @@ const Dashboard = () => {
           <CardHeader>
             <CardTitle>Case Status Overview</CardTitle>
           </CardHeader>
-          <CardContent className="h-80">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-              <div className="flex items-center justify-center">
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie
-                      data={crimeStatusData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {crimeStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="flex items-center justify-center">
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie
-                      data={investigationStatusData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {investigationStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+          <CardContent className="h-80 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center justify-center">
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={crimeStatusData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {crimeStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex items-center justify-center">
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={investigationStatusData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {investigationStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
@@ -304,63 +301,57 @@ const Dashboard = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {crimeStats.recentCrimes.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="data-grid">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Date</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                    <th>Severity</th>
+          <div className="overflow-x-auto">
+            <table className="data-grid">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Date</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                  <th>Severity</th>
+                </tr>
+              </thead>
+              <tbody>
+                {crimeStats.recentCrimes.map((crime: Crime) => (
+                  <tr key={crime.id}>
+                    <td>{formatCrimeType(crime.type)}</td>
+                    <td>
+                      <span className="block">{new Date(crime.date).toLocaleDateString()}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(crime.date), { addSuffix: true })}
+                      </span>
+                    </td>
+                    <td>{crime.location}</td>
+                    <td>
+                      <Badge 
+                        variant="secondary"
+                        className={cn(
+                          "capitalize",
+                          statusColors[crime.status as keyof typeof statusColors],
+                          "text-white"
+                        )}
+                      >
+                        {crime.status}
+                      </Badge>
+                    </td>
+                    <td>
+                      <Badge 
+                        variant="outline"
+                        className={cn(
+                          "capitalize",
+                          statusColors[crime.severity as keyof typeof statusColors],
+                          "bg-transparent border-current"
+                        )}
+                      >
+                        {crime.severity}
+                      </Badge>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {crimeStats.recentCrimes.map((crime: Crime) => (
-                    <tr key={crime.id}>
-                      <td>{formatCrimeType(crime.type)}</td>
-                      <td>
-                        <span className="block">{new Date(crime.date).toLocaleDateString()}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(crime.date), { addSuffix: true })}
-                        </span>
-                      </td>
-                      <td>{crime.location}</td>
-                      <td>
-                        <Badge 
-                          variant="secondary"
-                          className={cn(
-                            "capitalize",
-                            statusColors[crime.status as keyof typeof statusColors],
-                            "text-white"
-                          )}
-                        >
-                          {crime.status}
-                        </Badge>
-                      </td>
-                      <td>
-                        <Badge 
-                          variant="outline"
-                          className={cn(
-                            "capitalize",
-                            statusColors[crime.severity as keyof typeof statusColors],
-                            "bg-transparent border-current"
-                          )}
-                        >
-                          {crime.severity}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              No crime records available
-            </div>
-          )}
+                ))}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
     </div>
