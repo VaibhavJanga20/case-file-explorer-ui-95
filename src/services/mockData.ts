@@ -1,4 +1,3 @@
-
 import { 
   Crime, 
   CrimeType, 
@@ -279,6 +278,14 @@ export const getCrimeStatistics = (): CrimeStatistics => {
     return acc;
   }, {} as Record<CrimeType, number>);
   
+  // Initialize missing crime types with 0
+  const allCrimeTypes: CrimeType[] = ['theft', 'assault', 'burglary', 'robbery', 'fraud', 'homicide', 'vandalism', 'cyberCrime', 'kidnapping', 'drugOffense', 'other'];
+  allCrimeTypes.forEach(type => {
+    if (crimesByType[type] === undefined) {
+      crimesByType[type] = 0;
+    }
+  });
+  
   // Sort by date, most recent first
   const recentCrimes = [...crimes]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -294,8 +301,28 @@ export const getCrimeStatistics = (): CrimeStatistics => {
 };
 
 export const getSuspectStatistics = (): SuspectStatistics => {
-  const byCrimeType: Record<CrimeType, number> = {};
-  const byStatus: Record<SuspectStatus, number> = {};
+  const byCrimeType: Record<CrimeType, number> = {
+    theft: 0,
+    assault: 0,
+    burglary: 0,
+    robbery: 0,
+    fraud: 0,
+    homicide: 0,
+    vandalism: 0,
+    cyberCrime: 0,
+    kidnapping: 0,
+    drugOffense: 0,
+    other: 0
+  };
+  
+  const byStatus: Record<SuspectStatus, number> = {
+    'suspect': 0,
+    'person of interest': 0,
+    'charged': 0,
+    'cleared': 0,
+    'convicted': 0,
+    'acquitted': 0
+  };
   
   suspects.forEach(suspect => {
     const crime = getCrimeById(suspect.crimeId);
@@ -313,7 +340,12 @@ export const getSuspectStatistics = (): SuspectStatistics => {
 };
 
 export const getInvestigationStatistics = (): InvestigationStatistics => {
-  const byStatus: Record<InvestigationStatus, number> = {};
+  const byStatus: Record<InvestigationStatus, number> = {
+    'pending': 0,
+    'active': 0,
+    'complete': 0,
+    'suspended': 0
+  };
   
   investigations.forEach(investigation => {
     byStatus[investigation.status] = (byStatus[investigation.status] || 0) + 1;
