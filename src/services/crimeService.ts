@@ -1,4 +1,3 @@
-
 import { Crime, CrimeType, CrimeStatistics } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -66,6 +65,83 @@ export const getCrimeById = async (id: string): Promise<Crime | undefined> => {
       description: error.message || "Could not fetch crime details",
     });
     return undefined;
+  }
+};
+
+// Add createCrime function
+export const createCrime = async (crime: Omit<Crime, 'id'>): Promise<Crime | null> => {
+  try {
+    // Generate a UUID for the crime ID
+    const id = crypto.randomUUID().slice(0, 8);
+    
+    const { data, error } = await supabase
+      .from('crimes')
+      .insert([{ 
+        id, 
+        type: crime.type,
+        date: crime.date,
+        location: crime.location,
+        description: crime.description,
+        status: crime.status,
+        severity: crime.severity
+      }])
+      .select()
+      .single();
+    
+    if (error) {
+      throw error;
+    }
+    
+    toast({
+      title: "Crime record created",
+      description: "New crime has been successfully added"
+    });
+    
+    // Map database fields to frontend type
+    return {
+      id: data.id,
+      type: data.type as CrimeType,
+      date: data.date,
+      location: data.location,
+      description: data.description,
+      status: data.status,
+      severity: data.severity,
+    };
+  } catch (error: any) {
+    toast({
+      variant: "destructive",
+      title: "Error creating crime",
+      description: error.message || "Could not create crime record",
+    });
+    return null;
+  }
+};
+
+// Add deleteCrime function
+export const deleteCrime = async (id: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('crimes')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      throw error;
+    }
+    
+    toast({
+      title: "Crime record deleted",
+      description: "The crime record has been successfully removed"
+    });
+    
+    return true;
+  } catch (error: any) {
+    toast({
+      variant: "destructive",
+      title: "Error deleting crime",
+      description: error.message || "Could not delete crime record",
+    });
+    return false;
   }
 };
 

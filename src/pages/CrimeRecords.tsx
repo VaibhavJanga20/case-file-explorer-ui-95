@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { 
@@ -24,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { getCrimes } from "@/services/crimeService";
+import { getCrimes, createCrime, deleteCrime } from "@/services/crimeService";
 import { Crime, CrimeType } from "@/types";
 import { 
   Dialog, 
@@ -46,6 +47,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
 
 // Status color mapping
 const statusColors = {
@@ -82,11 +84,29 @@ const crimeTypes: CrimeType[] = [
 // All possible statuses for the filter
 const crimeStatuses = ['open', 'closed', 'cold', 'pending'];
 
-const CrimeDetailsDialog = ({ crime }: { crime: Crime }) => {
+interface CrimeDetailsDialogProps {
+  crime: Crime;
+  onDelete: (id: string) => Promise<void>;
+}
+
+const CrimeDetailsDialog = ({ crime, onDelete }: CrimeDetailsDialogProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete(crime.id);
+      setIsOpen(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="ghost">
+        <Button size="sm" variant="ghost" onClick={() => setIsOpen(true)}>
           <Info size={16} className="mr-1" />
           Details
         </Button>
@@ -154,19 +174,71 @@ const CrimeDetailsDialog = ({ crime }: { crime: Crime }) => {
         </div>
         
         <DialogFooter>
-          <Button variant="outline">Edit</Button>
-          <Button variant="destructive">Delete</Button>
+          <Button variant="outline" onClick={() => setIsOpen(false)}>Close</Button>
+          <Button 
+            variant="destructive" 
+            onClick={handleDelete} 
+            disabled={isDeleting}
+          >
+            {isDeleting ? 'Deleting...' : 'Delete'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 };
 
-const AddCrimeDialog = () => {
+const AddCrimeDialog = ({ onAddCrime }: { onAddCrime: (crime: Crime) => void }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [crimeData, setCrimeData] = useState<Partial<Crime>>({
+    type: undefined,
+    date: new Date().toISOString(),
+    location: '',
+    description: '',
+    status: 'open',
+    severity: 'medium'
+  });
+
+  const handleChange = (field: keyof Crime, value: any) => {
+    setCrimeData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async () => {
+    // Validate form
+    if (!crimeData.type || !crimeData.date || !crimeData.location || !crimeData.description) {
+      toast({
+        variant: "destructive",
+        title: "Missing information",
+        description: "Please fill out all required fields"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const newCrime = await createCrime(crimeData as Omit<Crime, 'id'>);
+      if (newCrime) {
+        onAddCrime(newCrime);
+        setIsOpen(false);
+        setCrimeData({
+          type: undefined,
+          date: new Date().toISOString(),
+          location: '',
+          description: '',
+          status: 'open',
+          severity: 'medium'
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setIsOpen(true)}>
           <PlusCircle size={18} />
           Add Crime
         </Button>
@@ -182,7 +254,10 @@ const AddCrimeDialog = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="crime-type">Crime Type</Label>
-            <Select>
+            <Select 
+              value={crimeData.type} 
+              onValueChange={value => handleChange('type', value)}
+            >
               <SelectTrigger id="crime-type">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
@@ -201,17 +276,30 @@ const AddCrimeDialog = () => {
           
           <div className="space-y-2">
             <Label htmlFor="crime-date">Date & Time</Label>
-            <Input id="crime-date" type="datetime-local" />
+            <Input 
+              id="crime-date" 
+              type="datetime-local"
+              value={crimeData.date ? new Date(crimeData.date).toISOString().slice(0, 16) : ''}
+              onChange={e => handleChange('date', new Date(e.target.value).toISOString())}
+            />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="crime-location">Location</Label>
-            <Input id="crime-location" placeholder="Enter location" />
+            <Input 
+              id="crime-location" 
+              placeholder="Enter location" 
+              value={crimeData.location}
+              onChange={e => handleChange('location', e.target.value)}
+            />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="crime-status">Status</Label>
-            <Select>
+            <Select
+              value={crimeData.status}
+              onValueChange={value => handleChange('status', value)}
+            >
               <SelectTrigger id="crime-status">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
@@ -230,7 +318,10 @@ const AddCrimeDialog = () => {
           
           <div className="space-y-2">
             <Label htmlFor="crime-severity">Severity</Label>
-            <Select>
+            <Select
+              value={crimeData.severity}
+              onValueChange={value => handleChange('severity', value)}
+            >
               <SelectTrigger id="crime-severity">
                 <SelectValue placeholder="Select severity" />
               </SelectTrigger>
@@ -248,13 +339,25 @@ const AddCrimeDialog = () => {
           
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="crime-description">Description</Label>
-            <Textarea id="crime-description" placeholder="Enter a detailed description of the crime" rows={4} />
+            <Textarea 
+              id="crime-description" 
+              placeholder="Enter a detailed description of the crime" 
+              rows={4} 
+              value={crimeData.description}
+              onChange={e => handleChange('description', e.target.value)}
+            />
           </div>
         </div>
         
         <DialogFooter>
-          <Button variant="outline">Cancel</Button>
-          <Button type="submit">Save</Button>
+          <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+          <Button 
+            type="submit" 
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Saving...' : 'Save'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -269,14 +372,17 @@ const CrimeRecords = () => {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [severityFilter, setSeverityFilter] = useState<string | null>(null);
   
-  useEffect(() => {
-    const fetchCrimes = async () => {
-      setLoading(true);
+  const fetchCrimes = async () => {
+    setLoading(true);
+    try {
       const crimesData = await getCrimes();
       setCrimes(crimesData);
+    } finally {
       setLoading(false);
-    };
-    
+    }
+  };
+
+  useEffect(() => {
     fetchCrimes();
   }, []);
   
@@ -284,6 +390,17 @@ const CrimeRecords = () => {
     setTypeFilter(null);
     setStatusFilter(null);
     setSeverityFilter(null);
+  };
+
+  const handleAddCrime = (newCrime: Crime) => {
+    setCrimes(prevCrimes => [newCrime, ...prevCrimes]);
+  };
+
+  const handleDeleteCrime = async (id: string) => {
+    const success = await deleteCrime(id);
+    if (success) {
+      setCrimes(prevCrimes => prevCrimes.filter(crime => crime.id !== id));
+    }
   };
   
   const filteredCrimes = crimes.filter(crime => {
@@ -319,7 +436,7 @@ const CrimeRecords = () => {
           <h1 className="text-3xl font-bold">Crime Records</h1>
           <p className="text-muted-foreground">Manage and view all crime incidents</p>
         </div>
-        <AddCrimeDialog />
+        <AddCrimeDialog onAddCrime={handleAddCrime} />
       </div>
       
       <Card className="mb-8">
@@ -489,7 +606,10 @@ const CrimeRecords = () => {
                         </Badge>
                       </td>
                       <td>
-                        <CrimeDetailsDialog crime={crime} />
+                        <CrimeDetailsDialog 
+                          crime={crime} 
+                          onDelete={handleDeleteCrime} 
+                        />
                       </td>
                     </tr>
                   ))
