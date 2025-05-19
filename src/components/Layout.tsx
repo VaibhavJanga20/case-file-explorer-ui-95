@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
-  AlertCircle, 
   BarChart3, 
   FileText, 
   Users, 
@@ -81,11 +80,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         className={cn(
           "bg-card border-r",
           isMobile 
-            ? "fixed inset-0 z-50 transform transition-transform duration-200 w-64",
-            isMobileMenuOpen 
-              ? "translate-x-0" 
-              : "-translate-x-full",
-            "md:static md:translate-x-0 md:w-64 md:flex md:flex-col md:min-h-screen"
+            ? "fixed inset-0 z-50 transform transition-transform duration-200 w-64"
+            : "md:static md:translate-x-0 md:w-64 md:flex md:flex-col md:min-h-screen",
+          isMobileMenuOpen && isMobile
+            ? "translate-x-0" 
+            : isMobile ? "-translate-x-full" : ""
         )}
       >
         {/* Sidebar header */}
