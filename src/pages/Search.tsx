@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { searchAll } from "@/services/mockData";
+import { searchAll } from "@/services/searchService";
 import { Crime, Suspect, Investigation } from "@/types";
 import SearchForm from "@/components/search/SearchForm";
 import SearchResults from "@/components/search/SearchResults";
@@ -14,16 +14,13 @@ const SearchPage = () => {
   } | null>(null);
   const [loading, setLoading] = useState(false);
   
-  const handleSearch = (term: string) => {
+  const handleSearch = async (term: string) => {
     setSearchTerm(term);
     setLoading(true);
     
-    // Simulate search delay
-    setTimeout(() => {
-      const results = searchAll(term);
-      setSearchResults(results);
-      setLoading(false);
-    }, 500);
+    const results = await searchAll(term);
+    setSearchResults(results);
+    setLoading(false);
   };
   
   return (

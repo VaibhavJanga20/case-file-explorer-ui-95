@@ -10,10 +10,13 @@ import {
   Menu, 
   X, 
   Briefcase,
-  Shield 
+  Shield,
+  LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 interface NavItemProps {
   to: string;
@@ -43,6 +46,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   const routes = [
     { path: "/", label: "Dashboard", icon: <BarChart3 size={20} /> },
@@ -54,6 +58,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
+  };
+
+  const handleSignOut = () => {
+    signOut();
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully",
+    });
   };
 
   return (
@@ -103,6 +115,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           )}
         </div>
 
+        {/* User info */}
+        {user && (
+          <div className="p-4 border-b text-sm">
+            <p className="font-medium">Signed in as:</p>
+            <p className="text-muted-foreground">{user.email}</p>
+          </div>
+        )}
+
         {/* Navigation links */}
         <div className="flex-1 p-4 space-y-2">
           {routes.map((route) => (
@@ -115,6 +135,15 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               onClick={isMobile ? closeMobileMenu : undefined}
             />
           ))}
+          
+          {/* Sign out button */}
+          <button
+            onClick={handleSignOut}
+            className="flex w-full items-center gap-3 px-3 py-2 rounded-md transition-colors text-foreground hover:bg-destructive hover:text-destructive-foreground mt-4"
+          >
+            <LogOut size={20} />
+            <span>Sign Out</span>
+          </button>
         </div>
       </nav>
 

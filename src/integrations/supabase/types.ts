@@ -9,7 +9,179 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      crimes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date: string
+          description: string
+          id: string
+          location: string
+          severity: Database["public"]["Enums"]["crime_severity"]
+          status: Database["public"]["Enums"]["crime_status"]
+          type: Database["public"]["Enums"]["crime_type"]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date: string
+          description: string
+          id: string
+          location: string
+          severity: Database["public"]["Enums"]["crime_severity"]
+          status: Database["public"]["Enums"]["crime_status"]
+          type: Database["public"]["Enums"]["crime_type"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          description?: string
+          id?: string
+          location?: string
+          severity?: Database["public"]["Enums"]["crime_severity"]
+          status?: Database["public"]["Enums"]["crime_status"]
+          type?: Database["public"]["Enums"]["crime_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crimes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investigations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          crime_id: string
+          id: string
+          last_updated: string
+          notes: string | null
+          officer_in_charge: string
+          start_date: string
+          status: Database["public"]["Enums"]["investigation_status"]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          crime_id: string
+          id: string
+          last_updated: string
+          notes?: string | null
+          officer_in_charge: string
+          start_date: string
+          status: Database["public"]["Enums"]["investigation_status"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          crime_id?: string
+          id?: string
+          last_updated?: string
+          notes?: string | null
+          officer_in_charge?: string
+          start_date?: string
+          status?: Database["public"]["Enums"]["investigation_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investigations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "investigations_crime_id_fkey"
+            columns: ["crime_id"]
+            isOneToOne: false
+            referencedRelation: "crimes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          name: string
+          role: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          role?: string
+        }
+        Relationships: []
+      }
+      suspects: {
+        Row: {
+          address: string | null
+          contact_info: string | null
+          created_at: string
+          created_by: string | null
+          crime_id: string
+          date_of_birth: string | null
+          gender: string | null
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["suspect_status"]
+        }
+        Insert: {
+          address?: string | null
+          contact_info?: string | null
+          created_at?: string
+          created_by?: string | null
+          crime_id: string
+          date_of_birth?: string | null
+          gender?: string | null
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["suspect_status"]
+        }
+        Update: {
+          address?: string | null
+          contact_info?: string | null
+          created_at?: string
+          created_by?: string | null
+          crime_id?: string
+          date_of_birth?: string | null
+          gender?: string | null
+          id?: string
+          name?: string
+          status?: Database["public"]["Enums"]["suspect_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suspects_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suspects_crime_id_fkey"
+            columns: ["crime_id"]
+            isOneToOne: false
+            referencedRelation: "crimes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +190,28 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      crime_severity: "low" | "medium" | "high" | "critical"
+      crime_status: "open" | "closed" | "cold" | "pending"
+      crime_type:
+        | "theft"
+        | "assault"
+        | "burglary"
+        | "robbery"
+        | "fraud"
+        | "homicide"
+        | "vandalism"
+        | "cyberCrime"
+        | "kidnapping"
+        | "drugOffense"
+        | "other"
+      investigation_status: "pending" | "active" | "complete" | "suspended"
+      suspect_status:
+        | "suspect"
+        | "person of interest"
+        | "charged"
+        | "cleared"
+        | "convicted"
+        | "acquitted"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +326,31 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      crime_severity: ["low", "medium", "high", "critical"],
+      crime_status: ["open", "closed", "cold", "pending"],
+      crime_type: [
+        "theft",
+        "assault",
+        "burglary",
+        "robbery",
+        "fraud",
+        "homicide",
+        "vandalism",
+        "cyberCrime",
+        "kidnapping",
+        "drugOffense",
+        "other",
+      ],
+      investigation_status: ["pending", "active", "complete", "suspended"],
+      suspect_status: [
+        "suspect",
+        "person of interest",
+        "charged",
+        "cleared",
+        "convicted",
+        "acquitted",
+      ],
+    },
   },
 } as const
